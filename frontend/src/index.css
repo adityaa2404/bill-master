@@ -1,0 +1,36 @@
+/* ---------------------------- */
+/* Google Font */
+/* ---------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap');
+
+/* ---------------------------- */
+/* Tailwind v4 Imports */
+/* ---------------------------- */
+@import "tailwindcss/preflight";
+@import "tailwindcss/theme" layer(base);
+@import "tailwindcss/utilities";
+
+/* ---------------------------- */
+/* Custom Theme Colors */
+/* ---------------------------- */
+@theme {
+  --color-primary-dark: #293241;  /* dark blue */
+  --color-primary: #3d5a80;       /* blue */
+  --color-light-blue: #98c1d9;    /* light blue */
+  --color-accent: #ee6c4d;        /* orange */
+  --color-cream: #f4f1de;         /* cream bg */
+}
+
+/* ---------------------------- */
+/* Global Styles */
+/* ---------------------------- */
+:root {
+  font-family: "Poppins", sans-serif;
+}
+
+/* Fullscreen layout fix */
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+}
