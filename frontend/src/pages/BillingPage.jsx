@@ -3,9 +3,12 @@ import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Layers, ShoppingCart } from "lucide-react" // Mobile Tab Icons
+import { useDispatch, useSelector } from "react-redux";
+
 import ScrollableBillItems from "@/components/ScrollableBillItems"
 import SectionAccordion from '@/components/SectionAccordion'
-
+import CustomerSection from '@/components/CustomerSection'
+import CustomerModal from '@/components/CustomerModal'
 // Initial Dummy Data
 const INITIAL_ITEMS = Array.from({ length: 30 }).map((_, i) => ({
   id: i + 1,
@@ -16,7 +19,20 @@ const BillingPage = () => {
   const [allItems, setAllItems] = useState(INITIAL_ITEMS);
   const [newItemName, setNewItemName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  
+  const [showCustomerModal, setShowCustomerModal] = useState(true);
+
+  const dispatch = useDispatch();
+
+const handleSelectCustomer = (cust) => {
+  dispatch(setCustomer(cust));
+
+  setShowCustomerModal(false);
+};
+
+const handleCreateCustomer = () => {
+  alert("Open Create Customer Form here");
+};
+
   // MOBILE STATE: Tabs
   const [activeTab, setActiveTab] = useState("items");
 
@@ -38,6 +54,12 @@ const BillingPage = () => {
     // LAYOUT: Fixed to viewport height
     <div className="flex flex-col md:flex-row w-full h-dvh overflow-hidden bg-primary-dark font-[Poppins] text-cream relative">
 
+
+      {/* <CustomerModal
+    open={showCustomerModal}
+    onSelectCustomer={handleSelectCustomer}
+    onCreateCustomer={handleCreateCustomer}
+  /> */}
       {/* =========================================
           LEFT SIDE (Items Panel) 
           Mobile: Only visible if tab is 'items'
@@ -118,10 +140,9 @@ const BillingPage = () => {
           ${activeTab === 'bill' ? 'flex w-full h-full' : 'hidden'}
       `}>
         
-        <div className='shrink-0 p-4 md:p-6 pb-0'>
-           <h1 className="text-lg md:text-xl font-bold text-cream tracking-wide">Project Sections</h1>
-           <Separator className="my-4 bg-light-blue/20" />
-        </div>
+        <div className="px-4 md:px-6 pt-3 pb-1">
+  <CustomerSection />
+</div>
 
         <div className="flex-1 overflow-hidden min-h-0 p-4 md:p-6 pt-0 pb-20 md:pb-6">
            <SectionAccordion />
