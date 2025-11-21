@@ -4,11 +4,13 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Layers, ShoppingCart } from "lucide-react" // Mobile Tab Icons
 import { useDispatch, useSelector } from "react-redux";
-
+import { useEffect } from 'react'
 import ScrollableBillItems from "@/components/ScrollableBillItems"
 import SectionAccordion from '@/components/SectionAccordion'
 import CustomerSection from '@/components/CustomerSection'
-import CustomerModal from '@/components/CustomerModal'
+import CustomerModal from '@/components/CustomerModal';
+import { useNavigate } from "react-router-dom";
+  
 // Initial Dummy Data
 const INITIAL_ITEMS = Array.from({ length: 30 }).map((_, i) => ({
   id: i + 1,
@@ -21,13 +23,21 @@ const BillingPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showCustomerModal, setShowCustomerModal] = useState(true);
 
-  const dispatch = useDispatch();
-
+const dispatch = useDispatch();
+const customer = useSelector((s) => s.billing.customer);
+  const navigate = useNavigate();
 const handleSelectCustomer = (cust) => {
   dispatch(setCustomer(cust));
 
   setShowCustomerModal(false);
 };
+
+
+  useEffect(() => {
+    if (!customer || !customer.name) {
+      navigate("/customer-select");
+    }
+  }, [customer, navigate]);
 
 const handleCreateCustomer = () => {
   alert("Open Create Customer Form here");
