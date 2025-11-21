@@ -50,16 +50,8 @@ const CustomerSection = ({ onSave }) => {
             </span>
           </span>
 
-
-          <span className="opacity-80">
-            Name:{" "}
-            <span className="text-light-blue">
-              {invoiceNumber || "--"}
-            </span>
-          </span>
-
-            <br />
-          <span className="font-bold text-accent">
+        
+          <span className="font-bold text-green-400">
             Total: ₹{grandTotal}
           </span>
         </div>
