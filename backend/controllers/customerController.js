@@ -1,9 +1,9 @@
 // controllers/customerController.js
-const Customer = require("../models/Customer");
+const customerService = require("../services/customerService");
 
 exports.createCustomer = async (req, res) => {
   try {
-    const customer = await Customer.create(req.body);
+    const customer = await customerService.createCustomer(req.body);
     res.json(customer);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -11,6 +11,20 @@ exports.createCustomer = async (req, res) => {
 };
 
 exports.getCustomers = async (req, res) => {
-  const customers = await Customer.find().sort({ createdAt: -1 });
-  res.json(customers);
+  try {
+    const customers = await customerService.getAllCustomers();
+    res.json(customers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getCustomerById = async (req, res) => {
+  try {
+    const customer = await customerService.getCustomerById(req.params.id);
+    if (!customer) return res.status(404).json({ error: "Customer not found" });
+    res.json(customer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
