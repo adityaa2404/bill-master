@@ -1,93 +1,120 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import api from "../config/api";
 
-const initialState = {
-  sections: [],         // [{ name, subsections: [{ name, items: [{id,title,rate,qty}]}] }]
-  activeSection: null,  // index
-  activeSubsection: null, // index
-};
+// Load complete structure
+export const fetchStructure = createAsyncThunk(
+  "sections/fetchStructure",
+  async (customerId) => {
+    const res = await api.get(`/structure/full/${customerId}`);
+    return res.data;
+  }
+);
+
+export const createSection = createAsyncThunk(
+  "sections/createSection",
+  async (payload) => {
+    const res = await api.post("/structure/sections", payload);
+    return res.data;
+  }
+);
+
+export const createSubsection = createAsyncThunk(
+  "sections/createSubsection",
+  async (payload) => {
+    const res = await api.post("/structure/subsections", payload);
+    return res.data;
+  }
+);
+
+export const assignItem = createAsyncThunk(
+  "sections/assignItem",
+  async (payload) => {
+    const res = await api.post("/structure/assign", payload);
+    return res.data;
+  }
+);
+
+export const updateAssignedItem = createAsyncThunk(
+  "sections/updateAssignedItem",
+  async ({ id, data }) => {
+    const res = await api.patch(`/structure/assigned/${id}`, data);
+    return res.data;
+  }
+);
+
+export const deleteAssignedItem = createAsyncThunk(
+  "sections/deleteAssignedItem",
+  async (id) => {
+    await api.delete(`/structure/assigned/${id}`);
+    return id;
+  }
+);
 
 const sectionsSlice = createSlice({
   name: "sections",
-  initialState,
+  initialState: {
+    structure: [],
+    activeSection: null,
+    activeSub: null,
+    loading: false,
+    error: null,
+  },
+
   reducers: {
-    addSection(state, action) {
-      state.sections.push({
-        name: action.payload,
-        subsections: [],
-      });
-    },
-
-    addSubsection(state, action) {
-      const { sectionIndex, name } = action.payload;
-      state.sections[sectionIndex].subsections.push({
-        name,
-        items: [],
-      });
-    },
-
     setActiveSection(state, action) {
       state.activeSection = action.payload;
-      state.activeSubsection = null;
+      state.activeSub = null;
     },
 
-    setActiveSubsection(state, action) {
-      state.activeSubsection = action.payload;
-    },
+    setActiveSub(state, action) {
+      state.activeSub = action.payload;
+    }
+  },
 
-    addItem(state, action) {
-      const { id, title, rate, qty } = action.payload;
+  extraReducers: (builder) => {
+    builder
+      // fetch full structure
+      .addCase(fetchStructure.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchStructure.fulfilled, (state, action) => {
+        state.loading = false;
+        state.structure = action.payload;
+      })
+      .addCase(fetchStructure.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
 
-      if (state.activeSection === null) return;
-      
-      // SUBSECTION SELECTED → Add inside subsection
-      if (state.activeSubsection !== null) {
-        state.sections[state.activeSection]
-          .subsections[state.activeSubsection]
-          .items.push({ id, title, rate, qty });
-        return;
-      }
-
-      // NO SUBSECTION SELECTED → Add directly inside section
-      state.sections[state.activeSection].items ??= [];
-      state.sections[state.activeSection].items.push({ id, title, rate, qty });
-    },
-
-    updateItem(state, action) {
-      const { sectionIndex, subIndex, itemIndex, rate, qty } = action.payload;
-
-      let target;
-      if (subIndex !== null) {
-        target = state.sections[sectionIndex].subsections[subIndex].items[itemIndex];
-      } else {
-        target = state.sections[sectionIndex].items[itemIndex];
-      }
-
-      if (target) {
-        target.rate = rate;
-        target.qty = qty;
-      }
-    },
-
-    deleteItem(state, action) {
-      const { sectionIndex, subIndex, itemIndex } = action.payload;
-
-      if (subIndex !== null) {
-        state.sections[sectionIndex].subsections[subIndex].items.splice(itemIndex, 1);
-      } else {
-        state.sections[sectionIndex].items.splice(itemIndex, 1);
-      }
-    },
+      // after these actions, UI refetches structure
+      .addCase(createSection.fulfilled, () => {})
+      .addCase(createSubsection.fulfilled, () => {})
+      .addCase(assignItem.fulfilled, () => {})
+      .addCase(updateAssignedItem.fulfilled, () => {})
+      .addCase(deleteAssignedItem.fulfilled, () => {});
   },
 });
 
-export const {
-  addSection,
-  addSubsection,
-  setActiveSection,
-  setActiveSubsection,
-  addItem,
-  updateItem,
-  deleteItem,
-} = sectionsSlice.actions;
+// Selector: Grand Total
+export const selectGrandTotal = (state) => {
+  let total = 0;
+
+  state.sections.structure.forEach((sec) => {
+    sec.items?.forEach((it) => {
+      total += (it.quantity || it.qty) * (it.rate || 0);
+    });
+
+    sec.subsections?.forEach((sub) =>
+      sub.items?.forEach((it) => {
+        total += (it.quantity || it.qty) * (it.rate || 0);
+      })
+    );
+  });
+
+  return total;
+};
+
+export const { setActiveSection, setActiveSub } = sectionsSlice.actions;
 
 export default sectionsSlice.reducer;

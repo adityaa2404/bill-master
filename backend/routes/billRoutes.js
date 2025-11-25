@@ -1,19 +1,26 @@
 // routes/billRoutes.js
 const express = require("express");
 const router = express.Router();
+
 const {
   createBill,
   getBillWithItems,
-  getBillsForCustomer
+  getBillsForCustomer,
+  printBill
 } = require("../controllers/billController");
 
-// create new bill
+// ⭐ ORDER MATTERS
+
+// PRINT FIRST
+router.get("/print/:customerId", printBill);
+
+// CREATE BILL
 router.post("/", createBill);
 
-// get single bill + all billed items (with populated info)
+// GET ONE BILL
 router.get("/:id", getBillWithItems);
 
-// list bills for a customer
+// GET ALL BILLS FOR A CUSTOMER
 router.get("/customer/:customerId", getBillsForCustomer);
 
 module.exports = router;
