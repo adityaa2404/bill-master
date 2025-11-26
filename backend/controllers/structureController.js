@@ -1,7 +1,7 @@
 // controllers/structureController.js
 const sectionService = require("../services/sectionService");
 const subsectionService = require("../services/subsectionService");
-const assignedItemService = require("../services/AssignedItemService");
+const assignedItemService = require("../services/assignedItemService");
 const Section = require("../models/Section");
 const Subsection = require("../models/Subsection");
 const AssignedItem = require("../models/AssignedItem");
