@@ -5,36 +5,26 @@
     <style>
         @page { size: A4; margin: 10mm; }
 
-        /* Poppins font (Google style) */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: sans-serif;
             font-size: 11px;
             color: #111827;
             background: #f3f4f6;
             line-height: 1.4;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        td, th {
-            vertical-align: top;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        td, th { vertical-align: top; }
 
         .invoice-wrapper {
-            background: #ffffff;
+            background: white;
             border-radius: 10px;
-            padding: 0;
             border: 1px solid #e5e7eb;
         }
 
         .header-main {
             background: #1a73e8;
-            color: #ffffff;
+            color: white;
             padding: 14px 20px;
             font-size: 20px;
             font-weight: 600;
@@ -42,7 +32,7 @@
 
         .header-sub {
             background: #1a73e8;
-            color: #ffffff;
+            color: white;
             padding: 6px 20px 10px 20px;
             font-size: 12px;
             font-weight: 500;
@@ -54,124 +44,48 @@
             padding: 10px 14px;
             border: 1px solid #e5e7eb;
         }
+        .card-label { font-size: 10px; color: #6b7280; }
+        .card-value { font-size: 11px; font-weight: 500; }
 
-        .card-label {
-            font-size: 10px;
-            color: #6b7280;
-            margin-bottom: 2px;
-        }
+        .section-title { font-size: 12px; font-weight: 700; margin: 10px 0 4px; color: #111827; }
+        .muted { color: #6b7280; font-size: 10px; }
 
-        .card-value {
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        .section-title {
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .muted {
-            color: #6b7280;
-            font-size: 10px;
-        }
-
-        .items-table {
-            margin-top: 12px;
-            border-radius: 8px 8px 0 0;
-            overflow: hidden;
-        }
-
-        .items-table th, .items-table td {
-            border: 1px solid #e5e7eb;
-            padding: 6px 8px;
-        }
+        .items-table { margin-top: 8px; border-radius: 6px; overflow: hidden; }
+        .items-table th, .items-table td { border: 1px solid #e5e7eb; padding: 6px 8px; }
 
         .items-header {
             background: #1a73e8;
-            color: #ffffff;
+            color: white;
             font-size: 10px;
             font-weight: 500;
-        }
-
-        .items-header th {
-            text-align: left;
         }
 
         .text-right { text-align: right; }
         .text-center { text-align: center; }
         .bold { font-weight: 600; }
 
-        .item-name {
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        .item-desc {
+        .subsection-name {
+            background: #eef5ff;
             font-size: 10px;
-            color: #6b7280;
-        }
-
-        .totals-wrapper {
-            margin-top: 12px;
-        }
-
-        .totals-wrapper td {
-            padding: 4px 8px;
-        }
-
-        .totals-label {
-            font-size: 10px;
-            color: #4b5563;
-        }
-
-        .totals-value {
-            font-size: 10px;
-            text-align: right;
+            padding: 4px 6px;
+            margin-top: 6px;
+            border-left: 3px solid #1a73e8;
         }
 
         .total-row {
             background: #1a73e8;
-            color: #ffffff;
-            border-radius: 20px;
+            color: white;
             padding: 6px 10px;
-            font-size: 11px;
+            border-radius: 6px;
+            font-size: 12px;
             font-weight: 600;
         }
 
-        .total-label {
-            text-align: left;
-        }
-
-        .total-amount {
-            text-align: right;
-        }
-
-        .amount-words {
-            font-size: 10px;
-            margin-top: 8px;
-        }
-
-        .signature-block {
-            margin-top: 20px;
-            text-align: right;
-            font-size: 10px;
-        }
-
-        .signature-line {
-            margin-top: 24px;
-            border-top: 1px solid #d1d5db;
-            width: 160px;
-            margin-left: auto;
-            padding-top: 4px;
-        }
-
         .footer {
-            margin-top: 6px;
             text-align: center;
+            color: #ff6a00;
+            margin-top: 8px;
             font-size: 9px;
-            color: #ff6a00; /* BillMaster orange */
             font-weight: 600;
         }
     </style>
@@ -181,32 +95,25 @@
 <table>
     <tr>
         <td>
-            <!-- Blue header -->
-            <div class="header-main">
-                {{ company.name }}
-            </div>
-            <div class="header-sub">
-                TAX INVOICE
-            </div>
+            <div class="header-main">{{ company.name }}</div>
+            <div class="header-sub">TAX INVOICE</div>
         </td>
     </tr>
 
     <tr>
-        <td style="padding: 10px 16px 12px 16px;">
+        <td style="padding: 12px 16px;">
             <table class="invoice-wrapper">
                 <tr>
                     <td style="padding: 16px 18px;">
-                        <!-- Top company & GST block -->
+
+                        <!-- COMPANY INFO -->
                         <table>
                             <tr>
-                                <td style="width: 60%; padding-right: 10px;">
-                                    <div style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">
-                                        {{ company.name }}
-                                    </div>
-                                    <div class="muted">
-                                        {{ company.address }}
-                                    </div>
+                                <td style="width: 60%;">
+                                    <div style="font-size: 14px; font-weight: 700;">{{ company.name }}</div>
+                                    <div class="muted">{{ company.address }}</div>
                                 </td>
+
                                 <td style="width: 40%;">
                                     <div class="muted">
                                         GSTIN: {{ company.gst }}<br>
@@ -216,13 +123,13 @@
                             </tr>
                         </table>
 
-                        <!-- Invoice info cards -->
+                        <!-- INVOICE CARDS -->
                         <table style="margin-top: 12px;">
                             <tr>
                                 <td style="width: 33%; padding-right: 6px;">
                                     <div class="card">
                                         <div class="card-label">Invoice #</div>
-                                        <div class="card-value">{{ billNumber }}</div>
+                                        <div class="card-value">{{ invoiceNumber }}</div>
                                     </div>
                                 </td>
                                 <td style="width: 33%; padding: 0 3px;">
@@ -240,19 +147,20 @@
                             </tr>
                         </table>
 
-                        <!-- Customer / Billing blocks -->
+                        <!-- CUSTOMER -->
                         <table style="margin-top: 12px;">
                             <tr>
                                 <td style="width: 50%; padding-right: 6px;">
                                     <div class="card">
                                         <div class="section-title">Customer Details</div>
-                                        <div class="bold" style="font-size: 11px;">{{ customer.name }}</div>
+                                        <div class="bold">{{ customer.name }}</div>
                                         <div class="muted">
                                             {{ customer.address }}<br>
                                             Ph: {{ customer.phone }}
                                         </div>
                                     </div>
                                 </td>
+
                                 <td style="width: 50%; padding-left: 6px;">
                                     <div class="card">
                                         <div class="section-title">Billing Address</div>
@@ -265,133 +173,84 @@
                             </tr>
                         </table>
 
-                        <!-- Items table -->
-                        <table class="items-table" style="margin-top: 14px;">
-                            <thead>
-                                <tr class="items-header">
-                                    <th style="width: 5%; text-align:center;">#</th>
-                                    <th style="width: 50%;">Item</th>
-                                    <th style="width: 10%; text-align:center;">Qty</th>
-                                    <th style="width: 15%; text-align:right;">Rate / Item</th>
-                                    <th style="width: 20%; text-align:right;">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in items %}
-                                <tr>
-                                    <td class="text-center">{{ loop.index }}</td>
-                                    <td>
-                                        <div class="item-name">{{ item.name }}</div>
-                                        <div class="item-desc">
-                                            {{ item.description }}
-                                        </div>
-                                    </td>
-                                    <td class="text-center">{{ item.quantity }} {{ item.unit }}</td>
-                                    <td class="text-right">{{ "{:,.2f}".format(item.rate) }}</td>
-                                    <td class="text-right bold">{{ "{:,.2f}".format(item.amount) }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                        <!-- SECTIONS + SUBSECTIONS + ITEMS -->
+                        {% for section in sections %}
+                            <div class="section-title">{{ section.sectionName }}</div>
 
-                        <!-- Bank & totals -->
-                        <table class="totals-wrapper">
-                            <tr>
-                                <td style="width: 55%; padding-top: 10px; padding-right: 10px;">
-                                    <div style="font-size: 10px; font-weight: 600; margin-bottom: 4px;">
-                                        Bank Details:
-                                    </div>
-                                    <div class="muted">
-                                        Bank: {{ company.bank }}<br>
-                                        Account #: {{ company.account_no }}<br>
-                                        IFSC Code: {{ company.ifsc }}<br>
-                                        Branch: {{ company.branch }}
-                                    </div>
+                            {% if section.items|length > 0 %}
+                            <table class="items-table">
+                                <thead>
+                                    <tr class="items-header">
+                                        <th>#</th>
+                                        <th>Item</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-right">Rate</th>
+                                        <th class="text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in section.items %}
+                                    <tr>
+                                        <td class="text-center">{{ loop.index }}</td>
+                                        <td>{{ item.name }}</td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-right">{{ "{:,.2f}".format(item.rate) }}</td>
+                                        <td class="text-right bold">{{ "{:,.2f}".format(item.amount) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% endif %}
 
-                                    <div class="amount-words">
-                                        <span class="muted">Total amount (in words):</span><br>
-                                        INR {{ amount_in_words }}
-                                    </div>
-                                </td>
+                            {% for sub in section.subsections %}
+                                <div class="subsection-name">{{ sub.name }}</div>
 
-                                <td style="width: 45%; padding-top: 10px;">
-                                    <table style="width: 100%;">
-                                        <tr>
-                                            <td class="totals-label">Delivery / Shipping Charges</td>
-                                            <td class="totals-value">&#8377; 0.00</td>
+                                <table class="items-table">
+                                    <thead>
+                                        <tr class="items-header">
+                                            <th>#</th>
+                                            <th>Item</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-right">Rate</th>
+                                            <th class="text-right">Amount</th>
                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in sub.items %}
                                         <tr>
-                                            <td class="totals-label">Taxable Amount</td>
-                                            <td class="totals-value">{{ "{:,.2f}".format(totalAmount) }}</td>
+                                            <td class="text-center">{{ loop.index }}</td>
+                                            <td>{{ item.name }}</td>
+                                            <td class="text-center">{{ item.quantity }}</td>
+                                            <td class="text-right">{{ "{:,.2f}".format(item.rate) }}</td>
+                                            <td class="text-right bold">{{ "{:,.2f}".format(item.amount) }}</td>
                                         </tr>
-                                        <tr>
-                                            <td class="totals-label">CGST 9.0%</td>
-                                            <td class="totals-value">&#8377; 0.00</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="totals-label">SGST 9.0%</td>
-                                            <td class="totals-value">&#8377; 0.00</td>
-                                        </tr>
-                                    </table>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            {% endfor %}
+                        {% endfor %}
 
-                                    <table style="width: 100%; margin-top: 6px;">
-                                        <tr>
-                                            <td colspan="2">
-                                                <div class="total-row">
-                                                    <table style="width:100%; border-collapse:collapse;">
-                                                        <tr>
-                                                            <td class="total-label">Total</td>
-                                                            <td class="total-amount">
-                                                                &#8377; {{ "{:,.2f}".format(totalAmount) }}
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-
-                                    <table style="width: 100%; margin-top: 6px;">
-                                        <tr>
-                                            <td class="totals-label">Total Discount</td>
-                                            <td class="totals-value">&#8377; 0.00</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="totals-label">Amount Payable</td>
-                                            <td class="totals-value">
-                                                &#8377; {{ "{:,.2f}".format(totalAmount) }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="totals-label">Amount Paid</td>
-                                            <td class="totals-value">&#8377; 0.00</td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-
-                        <!-- Signature -->
-                        <div class="signature-block">
-                            For {{ company.name }}
-                            <div class="signature-line">
-                                Authorized Signatory
+                        <!-- TOTAL -->
+                        <div style="margin-top: 16px;">
+                            <div class="total-row">
+                                <table style="width: 100%;">
+                                    <tr>
+                                        <td>Total</td>
+                                        <td class="text-right">₹ {{ "{:,.2f}".format(totalAmount) }}</td>
+                                    </tr>
+                                </table>
                             </div>
                         </div>
+
+                        <!-- FOOTER -->
+                        <div class="footer">Made with BillMaster</div>
 
                     </td>
                 </tr>
             </table>
-
-            <div class="footer">
-                Made with BillMaster
-            </div>
         </td>
     </tr>
 </table>
 
 </body>
 </html>
-
-
-

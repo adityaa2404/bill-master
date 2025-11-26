@@ -1,0 +1,76 @@
+{
+  "billId": "692616d1f12884970fee8b9d",
+  "billNumber": "BILL-1764139072125",
+  "billDate": "2025-11-26T06:37:52.125Z",
+  "totalAmount": 5750,
+  "customer": {
+    "_id": "692616d1f12884970fee8b9d",
+    "name": "test3",
+    "phone": "7745060502",
+    "address": "Pune",
+    "createdAt": "2025-11-25T20:51:29.483Z",
+    "__v": 0
+  },
+  "items": [
+    {
+      "name": "6 Amp Socket Point",
+      "unit": "Nos",
+      "quantity": 4,
+      "rate": 500,
+      "amount": 2000,
+      "description": "",
+      "section": "hall",
+      "subsection": "tv unit"
+    },
+    {
+      "name": "LED Panel Light / COB lights / cylinder light fitting",
+      "unit": "Nos",
+      "quantity": 500,
+      "rate": 2,
+      "amount": 1000,
+      "description": "",
+      "section": "hall",
+      "subsection": "tv unit"
+    },
+    {
+      "name": "LED Panel Light / COB lights / cylinder light fitting",
+      "unit": "Nos",
+      "quantity": 5,
+      "rate": 200,
+      "amount": 1000,
+      "description": "",
+      "section": "hall",
+      "subsection": null
+    },
+    {
+      "name": "Washing MAchine Point",
+      "unit": "Nos",
+      "quantity": 2,
+      "rate": 350,
+      "amount": 700,
+      "description": "",
+      "section": "hall",
+      "subsection": null
+    },
+    {
+      "name": "Washing MAchine Point",
+      "unit": "Nos",
+      "quantity": 3,
+      "rate": 350,
+      "amount": 1050,
+      "description": "",
+      "section": "Kitchen",
+      "subsection": null
+    }
+  ],
+  "company": {
+    "name": "Dattatray Potdar",
+    "address": "Sunshine Nagar, Rahatani, Pune - 411018",
+    "email": "dpp1980@gmail.com",
+    "gst": "27ABCDE1234F1Z5",
+    "bank": "HDFC BANK",
+    "account_no": "00071140048455",
+    "ifsc": "HDFC0000007",
+    "branch": "BHANDARKAR ROAD"
+  }
+}

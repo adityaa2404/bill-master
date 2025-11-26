@@ -1,138 +1,137 @@
+const fs = require("fs");
+const path = require("path");
+const { exec } = require("child_process");
+const mongoose = require("mongoose");
+const Bill = require("../models/Bill");
+const BilledItem = require("../models/BilledItem");
+
 const Customer = require("../models/Customer");
 const AssignedItem = require("../models/AssignedItem");
 const Item = require("../models/Item");
 const Section = require("../models/Section");
 const Subsection = require("../models/Subsection");
 
-const { exec } = require("child_process");
-const fs = require("fs");
-const path = require("path");
 
-/* ----------------------------------------------------
-   🟢 CREATE BILL  (dummy — you can modify later)
----------------------------------------------------- */
+// ----------------------------------------------------
+// ✅ CREATE BILL (USES AssignedItem)
+// ----------------------------------------------------
 exports.createBill = async (req, res) => {
   try {
-    return res.json({ message: "Bill created (placeholder logic)" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const { customerId, notes } = req.body;
 
-/* ----------------------------------------------------
-   🟢 GET SINGLE BILL (placeholder)
----------------------------------------------------- */
-exports.getBillWithItems = async (req, res) => {
-  try {
-    return res.json({ message: "Fetching a bill… (placeholder)" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    const assigned = await AssignedItem.find({ customerId }).lean();
+    if (!assigned.length)
+      return res.status(400).json({ error: "No assigned items found" });
 
-/* ----------------------------------------------------
-   🟢 GET ALL BILLS FOR A CUSTOMER (placeholder)
----------------------------------------------------- */
-exports.getBillsForCustomer = async (req, res) => {
-  try {
-    return res.json({ message: "Fetching all bills… (placeholder)" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-/* ----------------------------------------------------
-   🟢 PRINT BILL — FULL LOGIC (your working code)
----------------------------------------------------- */
-exports.printBill = async (req, res) => {
-  try {
-    const customerId = req.params.customerId;
-
-    const customer = await Customer.findById(customerId).lean();
+    const allItems = await Item.find().lean();
     const sections = await Section.find({ customerId }).lean();
     const subsections = await Subsection.find({ customerId }).lean();
-    const assigned = await AssignedItem.find({ customerId }).lean();
-    const allItems = await Item.find().lean();
 
-    const itemMap = {};
-    allItems.forEach((i) => (itemMap[i._id] = i));
+    const itemMap = Object.fromEntries(
+      allItems.map((i) => [i._id.toString(), i])
+    );
 
-    const finalSections = sections.map((sec) => {
-      const secSubs = subsections.filter(
-        (s) => s.sectionId.toString() === sec._id.toString()
-      );
+    const billNumber = "BILL-" + Date.now();
 
-      const secAssigned = assigned.filter(
-        (a) =>
-          a.sectionId.toString() === sec._id.toString() &&
-          !a.subsectionId
-      );
-
-      return {
-        sectionId: sec._id,
-        sectionName: sec.name,
-        items: secAssigned.map((i) => ({
-          id: i._id,
-          itemId: i.itemId,
-          name: itemMap[i.itemId]?.name || "",
-          unit: itemMap[i.itemId]?.unit || "",
-          quantity: i.quantity,
-          rate: i.rate,
-          amount: i.quantity * i.rate,
-        })),
-        subsections: secSubs.map((sub) => {
-          const subAssigned = assigned.filter(
-            (a) =>
-              a.subsectionId &&
-              a.subsectionId.toString() === sub._id.toString()
-          );
-
-          return {
-            subsectionId: sub._id,
-            name: sub.name,
-            items: subAssigned.map((i) => ({
-              id: i._id,
-              itemId: i.itemId,
-              name: itemMap[i.itemId]?.name || "",
-              unit: itemMap[i.itemId]?.unit || "",
-              quantity: i.quantity,
-              rate: i.rate,
-              amount: i.quantity * i.rate,
-            })),
-          };
-        }),
-      };
+    const newBill = await Bill.create({
+      customerId,
+      billNumber,
+      notes: notes || "",
+      totalAmount: 0,
     });
 
-    const billJSON = {
-      customer,
-      billNumber: "BILL-" + Date.now(),
-      billDate: new Date().toISOString(),
-      totalAmount: assigned.reduce((s, i) => s + i.quantity * i.rate, 0),
-      sections: finalSections,
+    let totalAmount = 0;
 
-      company: {
-        name: "Dattatray Potdar",
-        address: "Sunshine Nagar, Rahatani, Pune - 411018",
-        email: "dpp1980@gmail.com",
-        gst: "27ABCDE1234F1Z5",
-        bank: "HDFC BANK",
-        account_no: "00071140048455",
-        ifsc: "HDFC0000007",
-        branch: "BHANDARKAR ROAD",
-      },
-    };
+    for (let a of assigned) {
+      const amount = a.quantity * a.rate;
+      totalAmount += amount;
 
-    const tempJson = path.join(__dirname, "../pdf/temp_bill.json");
-    const outputPdf = path.join(__dirname, "../pdf/output.pdf");
+      await BilledItem.create({
+        billId: newBill._id,
+        customerId,
+        itemId: a.itemId,
+        sectionId: a.sectionId,
+        subsectionId: a.subsectionId || null,
+        quantity: a.quantity,
+        rate: a.rate,
+        amount,
+        description: a.notes || "",
+      });
+    }
+
+    newBill.totalAmount = totalAmount;
+    await newBill.save();
+
+    res.json({
+      success: true,
+      billId: newBill._id,
+      billNumber,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ----------------------------------------------------
+// ✅ GET SINGLE BILL + ITEMS
+// ----------------------------------------------------
+exports.getBillWithItems = async (req, res) => {
+  try {
+    const billId = req.params.billId;
+
+    const bill = await Bill.findById(billId).populate("customerId").lean();
+    if (!bill) return res.status(404).json({ error: "Bill not found" });
+
+    const items = await BilledItem.find({ billId })
+      .populate("itemId")
+      .populate("sectionId")
+      .populate("subsectionId")
+      .lean();
+
+    res.json({ bill, items });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ----------------------------------------------------
+// ✅ GET ALL BILLS FOR CUSTOMER
+// ----------------------------------------------------
+exports.getBillsForCustomer = async (req, res) => {
+  try {
+    const customerId = req.params.customerId;
+    const bills = await Bill.find({ customerId }).sort({ billDate: -1 });
+
+    res.json(bills);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ----------------------------------------------------
+// ✅ PRINT BILL (DEBUG MODE — RETURNS JSON ONLY)
+// ----------------------------------------------------
+exports.printBill = async (req, res) => {
+  try {
+    const billJSON = req.body;
+
+    console.log("🟢 RECEIVED BILL JSON:", billJSON);
+
+    const invoiceFolder = path.join(__dirname, "../invoice");
+    if (!fs.existsSync(invoiceFolder)) fs.mkdirSync(invoiceFolder);
+
+    const tempJson = path.join(invoiceFolder, "temp_bill.json");
+    const outputPdf = path.join(invoiceFolder, "output.pdf");
 
     fs.writeFileSync(tempJson, JSON.stringify(billJSON, null, 2));
 
     exec(
-      `python backend/pdf/generate_invoice.py ${tempJson} ${outputPdf}`,
-      (err) => {
-        if (err)
-          return res.status(500).json({ error: "PDF generation failed", details: err });
+      `python backend/invoice/gen_invoice.py "${tempJson}" "${outputPdf}"`,
+      (err, stdout, stderr) => {
+        if (err) {
+          console.error("❌ Python Error:", err);
+          return res.status(500).json({ error: "PDF generation failed" });
+        }
 
         const pdf = fs.readFileSync(outputPdf);
         res.setHeader("Content-Type", "application/pdf");

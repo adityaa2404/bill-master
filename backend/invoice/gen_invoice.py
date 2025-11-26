@@ -1,61 +1,29 @@
 import json
+import sys
+import os
 from datetime import datetime
 from jinja2 import Template
 from weasyprint import HTML
-import sys
 
-def generate_pdf(data, output_path="invoice.pdf"):
-    # Parse date
-    dt_obj = datetime.fromisoformat(data['billDate'].replace('Z', '+00:00'))
-    data['formatted_date'] = dt_obj.strftime("%d %b %Y")
+input_json_path = sys.argv[1]
+output_pdf_path = sys.argv[2]
 
-    # Convert sections → items (flatten)
-    flat_items = []
-    for sec in data["sections"]:
-        section_name = sec["sectionName"]
-        
-        # Global items
-        for it in sec["items"]:
-            flat_items.append({
-                "name": it["name"],
-                "unit": it.get("unit", ""),
-                "quantity": it["quantity"],
-                "rate": it["rate"],
-                "amount": it["quantity"] * it["rate"],
-                "section": section_name,
-                "subsection": None,
-                "description": it.get("notes", "")
-            })
+with open(input_json_path, "r", encoding="utf-8") as f:
+    data = json.load(f)
 
-        # Subsection items
-        for sub in sec["subsections"]:
-            for it in sub["items"]:
-                flat_items.append({
-                    "name": it["name"],
-                    "unit": it.get("unit", ""),
-                    "quantity": it["quantity"],
-                    "rate": it["rate"],
-                    "amount": it["quantity"] * it["rate"],
-                    "section": section_name,
-                    "subsection": sub["name"],
-                    "description": it.get("notes", "")
-                })
+bill_date = data.get("invoiceDate") or datetime.now().isoformat()
+dt = datetime.fromisoformat(bill_date.replace("Z", "+00:00"))
+data["formatted_date"] = dt.strftime("%d %b %Y")
+data["amount_in_words"] = f"{data.get('totalAmount')} Rupees Only"
 
-    data["items"] = flat_items
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+template_path = os.path.join(BASE_DIR, "template.html")
 
-    # Load HTML template
-    template = Template(open("template.html", "r").read())
+with open(template_path, "r", encoding="utf-8") as f:
+    html_template = f.read()
 
-    html = template.render(**data)
+template = Template(html_template)
+html = template.render(**data)
 
-    HTML(string=html).write_pdf(output_path)
-
-    return output_path
-
-
-if __name__ == "__main__":
-    json_input = sys.argv[1]
-    output = sys.argv[2]
-
-    data = json.loads(open(json_input).read())
-    generate_pdf(data, output)
+HTML(string=html).write_pdf(output_pdf_path)
+print("PDF SUCCESS")

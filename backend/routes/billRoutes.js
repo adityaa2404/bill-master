@@ -1,4 +1,3 @@
-// routes/billRoutes.js
 const express = require("express");
 const router = express.Router();
 
@@ -9,18 +8,16 @@ const {
   printBill
 } = require("../controllers/billController");
 
-// ⭐ ORDER MATTERS
+// PRINT BILL (POST JSON → PDF)
+router.post("/print", printBill);
 
-// PRINT FIRST
-router.get("/print/:customerId", printBill);
 
-// CREATE BILL
 router.post("/", createBill);
 
-// GET ONE BILL
-router.get("/:id", getBillWithItems);
 
-// GET ALL BILLS FOR A CUSTOMER
 router.get("/customer/:customerId", getBillsForCustomer);
+
+
+router.get("/:billId", getBillWithItems);
 
 module.exports = router;
