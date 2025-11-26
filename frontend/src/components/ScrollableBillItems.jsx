@@ -5,13 +5,28 @@ import { Item, ItemTitle } from "@/components/ui/item";
 import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 
-import { assignItem, fetchStructure } from "@/store/sectionsSlice";
+import {
+  assignItem,
+  fetchStructure,
+  fetchCustomerRates,
+  setSaving,  
+} from "@/store/sectionsSlice";
 
 /**
  * items = master items from DB (itemsSlice.list)
  * shape: { _id, name, unit, defaultQty, ... }
  */
 export default function ScrollableBillItems({ items = [] }) {
+  const dispatch = useDispatch();
+  const selectedCustomer = useSelector((s) => s.customers.selectedCustomer);
+
+  // 🔥 Load customer-specific saved rates whenever customer changes
+  React.useEffect(() => {
+    if (selectedCustomer?._id) {
+      dispatch(fetchCustomerRates(selectedCustomer._id));
+    }
+  }, [selectedCustomer, dispatch]);
+
   return (
     <div className="h-full w-full flex flex-col bg-primary-dark/20 border border-accent/50 rounded-md p-3 overflow-hidden">
       <h3 className="text-lg font-semibold text-cream mb-4 shrink-0">
@@ -32,11 +47,7 @@ export default function ScrollableBillItems({ items = [] }) {
           </p>
         ) : (
           items.map((item) => (
-            <BillItem
-              // key must be stable → use Mongo _id
-              key={item._id || item.id}
-              item={item}
-            />
+            <BillItem key={item._id || item.id} item={item} />
           ))
         )}
       </div>
@@ -48,30 +59,41 @@ function BillItem({ item }) {
   const dispatch = useDispatch();
 
   const selectedCustomer = useSelector((s) => s.customers.selectedCustomer);
-  const activeSection = useSelector((s) => s.sections.activeSection); // index
-  const activeSub = useSelector((s) => s.sections.activeSub);         // index or null
-  const sections = useSelector((s) => s.sections.structure);          // array from backend
+  const activeSection = useSelector((s) => s.sections.activeSection);
+  const activeSub = useSelector((s) => s.sections.activeSub);
+  const sections = useSelector((s) => s.sections.structure);
+
+    const customerRates = useSelector((s) => s.sections.customerRates);
+
+  const id = item._id || item.id; // <—— IMPORTANT
 
   const [qty, setQty] = React.useState(item.defaultQty || 0);
-  const [rate, setRate] = React.useState(""); // stays even after Add
+
+  const [rate, setRate] = React.useState(
+    customerRates[id] ?? item.defaultRate ?? ""
+  );
+
+  React.useEffect(() => {
+    if (customerRates[id] !== undefined) {
+      setRate(customerRates[id]);
+    }
+  }, [customerRates, id]);
+
 
   const inc = () => setQty((q) => q + 1);
   const dec = () => setQty((q) => (q > 0 ? q - 1 : 0));
 
   const handleAdd = () => {
-    // 1. must have a customer
     if (!selectedCustomer?._id) {
       alert("Please select a customer first.");
       return;
     }
 
-    // 2. must have a section (index can be 0 → only null/undefined is invalid)
     if (activeSection === null || activeSection === undefined) {
       alert("Please select a section on the right first.");
       return;
     }
 
-    // 3. qty & rate must be valid
     if (!qty || !rate) {
       alert("Please enter a valid Rate and Quantity.");
       return;
@@ -83,7 +105,6 @@ function BillItem({ item }) {
       return;
     }
 
-    // 4. resolve subsectionId (or null for global item)
     let subsectionId = null;
     if (
       activeSub !== null &&
@@ -94,25 +115,31 @@ function BillItem({ item }) {
       subsectionId = sec.subsections[activeSub].subsectionId;
     }
 
-    // 5. send correct payload to backend
     const payload = {
       customerId: selectedCustomer._id,
-      sectionId: sec.sectionId,                // from /structure/full
-      subsectionId,                            // null = global item in section
-      itemId: item._id || item.id,            // master item ID
+      sectionId: sec.sectionId,
+      subsectionId,
+      itemId: item._id || item.id,
       quantity: Number(qty),
       rate: Number(rate),
       notes: "",
     };
 
-    dispatch(assignItem(payload)).then(() => {
-      // refetch full structure so right panel + totals update
-      dispatch(fetchStructure(selectedCustomer._id));
-    });
+    // dispatch(assignItem(payload)).then(() => {
+    //   dispatch(fetchStructure(selectedCustomer._id));
 
-    // reset only QTY – keep rate as user liked
+    //   // 🔥 VERY IMPORTANT: reload updated rate memory
+    //   dispatch(fetchCustomerRates(selectedCustomer._id));
+    // });
+    dispatch(setSaving(true));
+
+  dispatch(assignItem(payload)).then(() => {
+    dispatch(fetchStructure(selectedCustomer._id)).then(() => {
+      dispatch(setSaving(false)); // 🔥 AUTOSAVE DONE
+    });
+  });
+
     setQty(item.defaultQty || 0);
-    // setRate(rate);  // do NOT clear
   };
 
   return (
@@ -120,22 +147,19 @@ function BillItem({ item }) {
       variant="outline"
       className="border-accent px-2 py-2 rounded-lg flex flex-col items-start gap-2 w-full shrink-0"
     >
-      {/* NAME – from items collection */}
       <ItemTitle className="text-base font-semibold text-light-blue truncate w-full">
         {item.name || item.title}
       </ItemTitle>
 
       <div className="flex flex-wrap items-center justify-between gap-2 w-full">
-        {/* Rate input */}
         <Input
           type="number"
           placeholder="Rate"
           value={rate}
           onChange={(e) => setRate(e.target.value)}
-          className="w-16 h-8 text-xs bg-background border-accent text-center px-1 py-0 leading-none placeholder:leading-normal"
+          className="w-16 h-8 text-xs bg-background border-accent text-center px-1 py-0"
         />
 
-        {/* Qty control */}
         <div className="flex items-center border border-accent rounded-md bg-background h-8">
           <Button
             variant="ghost"
@@ -150,10 +174,7 @@ function BillItem({ item }) {
             type="number"
             value={qty}
             onChange={(e) => setQty(parseInt(e.target.value) || 0)}
-            className="w-10 h-full border-0 text-center text-xs px-0 py-0 leading-none focus-visible:ring-0
-              [appearance:textfield]
-              [&::-webkit-outer-spin-button]:appearance-none
-              [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-10 h-full border-0 text-center text-xs px-0 py-0"
           />
 
           <Button
@@ -166,7 +187,6 @@ function BillItem({ item }) {
           </Button>
         </div>
 
-        {/* Add button */}
         <Button onClick={handleAdd} size="sm" className="h-8 px-3 text-xs">
           Add
         </Button>

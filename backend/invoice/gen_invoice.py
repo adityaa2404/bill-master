@@ -5,25 +5,39 @@ from datetime import datetime
 from jinja2 import Template
 from weasyprint import HTML
 
+# INPUT PATHS
 input_json_path = sys.argv[1]
 output_pdf_path = sys.argv[2]
 
+# READ JSON
 with open(input_json_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
-bill_date = data.get("invoiceDate") or datetime.now().isoformat()
-dt = datetime.fromisoformat(bill_date.replace("Z", "+00:00"))
-data["formatted_date"] = dt.strftime("%d %b %Y")
-data["amount_in_words"] = f"{data.get('totalAmount')} Rupees Only"
+# DATE
+if data.get("invoiceDate"):
+    try:
+        dt = datetime.fromisoformat(data["invoiceDate"].replace("Z", "+00:00"))
+        data["formatted_date"] = dt.strftime("%d %b %Y")
+    except:
+        data["formatted_date"] = ""
+else:
+    data["formatted_date"] = ""
 
+# AMOUNT (words — simple)
+data["amount_in_words"] = f"Rupees {data.get('totalAmount', 0):,.2f} Only"
+
+# TEMPLATE PATH
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 template_path = os.path.join(BASE_DIR, "template.html")
 
 with open(template_path, "r", encoding="utf-8") as f:
     html_template = f.read()
 
+# RENDER
 template = Template(html_template)
-html = template.render(**data)
+final_html = template.render(**data)
 
-HTML(string=html).write_pdf(output_pdf_path)
-print("PDF SUCCESS")
+# GENERATE PDF
+HTML(string=final_html).write_pdf(output_pdf_path)
+
+print("PDF DONE:", output_pdf_path)

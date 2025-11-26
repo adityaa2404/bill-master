@@ -114,8 +114,7 @@ exports.getBillsForCustomer = async (req, res) => {
 exports.printBill = async (req, res) => {
   try {
     const billJSON = req.body;
-
-    console.log("🟢 RECEIVED BILL JSON:", billJSON);
+    console.log("🟢 RECEIVED PRINT JSON:", billJSON);
 
     const invoiceFolder = path.join(__dirname, "../invoice");
     if (!fs.existsSync(invoiceFolder)) fs.mkdirSync(invoiceFolder);
@@ -134,9 +133,11 @@ exports.printBill = async (req, res) => {
         }
 
         const pdf = fs.readFileSync(outputPdf);
+
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", "attachment; filename=bill.pdf");
-        res.send(pdf);
+
+        return res.send(pdf);
       }
     );
   } catch (err) {

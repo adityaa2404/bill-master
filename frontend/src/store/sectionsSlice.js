@@ -10,6 +10,15 @@ export const fetchStructure = createAsyncThunk(
   }
 );
 
+// Load customer-specific saved rates
+export const fetchCustomerRates = createAsyncThunk(
+  "sections/fetchCustomerRates",
+  async (customerId) => {
+    const res = await api.get(`/structure/rates/${customerId}`);
+    return res.data;
+  }
+);
+
 export const createSection = createAsyncThunk(
   "sections/createSection",
   async (payload) => {
@@ -50,6 +59,22 @@ export const deleteAssignedItem = createAsyncThunk(
   }
 );
 
+export const deleteSection = createAsyncThunk(
+  "sections/deleteSection",
+  async (sectionId) => {
+    await api.delete(`/structure/sections/${sectionId}`);
+    return sectionId;
+  }
+);
+
+export const deleteSubsection = createAsyncThunk(
+  "sections/deleteSubsection",
+  async (subId) => {
+    await api.delete(`/structure/subsections/${subId}`);
+    return subId;
+  }
+);
+
 const sectionsSlice = createSlice({
   name: "sections",
   initialState: {
@@ -58,6 +83,11 @@ const sectionsSlice = createSlice({
     activeSub: null,
     loading: false,
     error: null,
+
+    saving: false,
+    saveStatus: "Saved",
+
+    customerRates: {},
   },
 
   reducers: {
@@ -68,15 +98,18 @@ const sectionsSlice = createSlice({
 
     setActiveSub(state, action) {
       state.activeSub = action.payload;
-    }
+    },
+
+    setSaving(state, action) {
+      state.saving = action.payload;
+      state.saveStatus = action.payload ? "Saving..." : "Saved";
+    },
   },
 
   extraReducers: (builder) => {
     builder
-      // fetch full structure
       .addCase(fetchStructure.pending, (state) => {
         state.loading = true;
-        state.error = null;
       })
       .addCase(fetchStructure.fulfilled, (state, action) => {
         state.loading = false;
@@ -87,27 +120,39 @@ const sectionsSlice = createSlice({
         state.error = action.error.message;
       })
 
-      // after these actions, UI refetches structure
-      .addCase(createSection.fulfilled, () => {})
-      .addCase(createSubsection.fulfilled, () => {})
+      .addCase(fetchCustomerRates.fulfilled, (state, action) => {
+        state.customerRates = {};
+        action.payload.forEach((r) => {
+          const itemId =
+            typeof r.itemId === "string" ? r.itemId : r.itemId?._id;
+
+          if (itemId) {
+            state.customerRates[itemId] = r.rate;
+          }
+        });
+      })
+
       .addCase(assignItem.fulfilled, () => {})
       .addCase(updateAssignedItem.fulfilled, () => {})
-      .addCase(deleteAssignedItem.fulfilled, () => {});
+      .addCase(deleteAssignedItem.fulfilled, () => {})
+      .addCase(createSection.fulfilled, () => {})
+      .addCase(createSubsection.fulfilled, () => {})
+      .addCase(deleteSection.fulfilled, () => {})
+      .addCase(deleteSubsection.fulfilled, () => {});
   },
 });
 
-// Selector: Grand Total
 export const selectGrandTotal = (state) => {
   let total = 0;
 
   state.sections.structure.forEach((sec) => {
     sec.items?.forEach((it) => {
-      total += (it.quantity || it.qty) * (it.rate || 0);
+      total += (it.quantity || 0) * (it.rate || 0);
     });
 
     sec.subsections?.forEach((sub) =>
       sub.items?.forEach((it) => {
-        total += (it.quantity || it.qty) * (it.rate || 0);
+        total += (it.quantity || 0) * (it.rate || 0);
       })
     );
   });
@@ -115,6 +160,10 @@ export const selectGrandTotal = (state) => {
   return total;
 };
 
-export const { setActiveSection, setActiveSub } = sectionsSlice.actions;
+export const {
+  setActiveSection,
+  setActiveSub,
+  setSaving,
+} = sectionsSlice.actions;
 
 export default sectionsSlice.reducer;

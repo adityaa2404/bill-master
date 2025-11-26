@@ -1,66 +1,86 @@
 {
-  "billId": "692616d1f12884970fee8b9d",
-  "billNumber": "BILL-1764139072125",
-  "billDate": "2025-11-26T06:37:52.125Z",
-  "totalAmount": 5750,
   "customer": {
-    "_id": "692616d1f12884970fee8b9d",
-    "name": "test3",
+    "_id": "6924c8156eb21e10d31b525a",
+    "name": "test",
     "phone": "7745060502",
-    "address": "Pune",
-    "createdAt": "2025-11-25T20:51:29.483Z",
+    "address": "rahatani",
+    "createdAt": "2025-11-24T21:03:17.777Z",
     "__v": 0
   },
-  "items": [
+  "totalAmount": 4500,
+  "sections": [
     {
-      "name": "6 Amp Socket Point",
-      "unit": "Nos",
-      "quantity": 4,
-      "rate": 500,
-      "amount": 2000,
-      "description": "",
-      "section": "hall",
-      "subsection": "tv unit"
+      "sectionId": "6924c8236eb21e10d31b525d",
+      "sectionName": "Hall",
+      "items": [
+        {
+          "id": "6925ac78c9935954a8f0ffa6",
+          "itemId": "6921da6c0475267a26190f51",
+          "name": "16 Amp Power Point for AC / Geyser / washing machine",
+          "unit": "Nos",
+          "quantity": 2,
+          "rate": 500,
+          "notes": ""
+        },
+        {
+          "id": "6925ae94ccaba71d0e7601e5",
+          "itemId": "6921da6c0475267a26190f4d",
+          "name": "Exhaust Fan Point",
+          "unit": "Nos",
+          "quantity": 2,
+          "rate": 500,
+          "notes": ""
+        }
+      ],
+      "subsections": [
+        {
+          "subsectionId": "6924c82d6eb21e10d31b5262",
+          "name": "TV unit",
+          "items": []
+        },
+        {
+          "subsectionId": "6924cd426eb21e10d31b5274",
+          "name": "wef 4",
+          "items": [
+            {
+              "id": "6925be020c0dbd937c963fc3",
+              "itemId": "6921da6c0475267a26190f50",
+              "name": "16 Amp Power Point",
+              "unit": "Nos",
+              "quantity": 3,
+              "rate": 500,
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "subsectionId": "6925a277b2ac6a0e8b166b06",
+          "name": "Zcxvcgbhvb",
+          "items": [
+            {
+              "id": "6926f23cb401d6acfb3f150f",
+              "itemId": "6921da6c0475267a26190f50",
+              "name": "16 Amp Power Point",
+              "unit": "Nos",
+              "quantity": 2,
+              "rate": 500,
+              "notes": ""
+            }
+          ]
+        }
+      ]
     },
     {
-      "name": "LED Panel Light / COB lights / cylinder light fitting",
-      "unit": "Nos",
-      "quantity": 500,
-      "rate": 2,
-      "amount": 1000,
-      "description": "",
-      "section": "hall",
-      "subsection": "tv unit"
-    },
-    {
-      "name": "LED Panel Light / COB lights / cylinder light fitting",
-      "unit": "Nos",
-      "quantity": 5,
-      "rate": 200,
-      "amount": 1000,
-      "description": "",
-      "section": "hall",
-      "subsection": null
-    },
-    {
-      "name": "Washing MAchine Point",
-      "unit": "Nos",
-      "quantity": 2,
-      "rate": 350,
-      "amount": 700,
-      "description": "",
-      "section": "hall",
-      "subsection": null
-    },
-    {
-      "name": "Washing MAchine Point",
-      "unit": "Nos",
-      "quantity": 3,
-      "rate": 350,
-      "amount": 1050,
-      "description": "",
-      "section": "Kitchen",
-      "subsection": null
+      "sectionId": "69254ad35477942b5a937ddf",
+      "sectionName": "kjb",
+      "items": [],
+      "subsections": [
+        {
+          "subsectionId": "69254ada5477942b5a937de7",
+          "name": "kj",
+          "items": []
+        }
+      ]
     }
   ],
   "company": {

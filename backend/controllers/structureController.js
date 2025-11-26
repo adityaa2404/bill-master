@@ -1,8 +1,14 @@
 // controllers/structureController.js
 const sectionService = require("../services/sectionService");
 const subsectionService = require("../services/subsectionService");
-const assignedItemService = require("../services/assignedItemService");
+const assignedItemService = require("../services/AssignedItemService");
+const Section = require("../models/Section");
+const Subsection = require("../models/Subsection");
+const AssignedItem = require("../models/AssignedItem");
+const Customer = require("../models/Customer");
 
+const CustomerItemRate = require("../models/CustomerItemRate");
+const customerItemRateService = require("../services/customerItemRateService");
 exports.createSection = async (req, res) => {
   try {
     const section = await sectionService.createSection(req.body);
@@ -41,15 +47,34 @@ exports.getSubsectionsBySection = async (req, res) => {
 
 exports.assignItem = async (req, res) => {
   console.log("🟦 ASSIGN RECEIVED BODY:", req.body);
+
   try {
     const assigned = await assignedItemService.assignItem(req.body);
-    console.log("🟩 SAVED DOCUMENT:", assigned);
+    console.log("🟩 ITEM SAVED:", assigned._id);
+
+    // 🔥 VERY IMPORTANT: SAVE RATE PER CUSTOMER
+    console.log("🟦 SAVING RATE:", {
+      customer: req.body.customerId,
+      item: req.body.itemId,
+      rate: req.body.rate
+    });
+
+    await customerItemRateService.setRateForCustomerItem(
+      req.body.customerId,
+      req.body.itemId,
+      req.body.rate
+    );
+
+    console.log("🟩 RATE UPDATED SUCCESSFULLY");
+
     res.json(assigned);
+
   } catch (err) {
     console.log("🟥 ASSIGN ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 
 exports.getFullStructure = async (req, res) => {
@@ -158,6 +183,110 @@ exports.clearAssignedForCustomer = async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+// Delete a whole section: its subsections + all assigned items
+exports.deleteSection = async (req, res) => {
+  try {
+    const sectionId = req.params.id;
+
+    if (!sectionId) {
+      return res.status(400).json({ error: "Section id is required" });
+    }
+
+    // 1) Find all subsections under this section
+    const subsections = await Subsection.find({ sectionId }).select("_id");
+    const subIds = subsections.map((s) => s._id);
+
+    // 2) Delete assigned items belonging to:
+    //    - the section (global items)
+    //    - any of its subsections
+    await AssignedItem.deleteMany({
+      $or: [
+        { sectionId }, // global items in this section
+        { subsectionId: { $in: subIds } }, // items under subsections
+      ],
+    });
+
+    // 3) Delete subsections
+    await Subsection.deleteMany({ sectionId });
+
+    // 4) Delete the section itself
+    await Section.findByIdAndDelete(sectionId);
+
+    res.json({ success: true, id: sectionId });
+  } catch (err) {
+    console.error("Error deleting section:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Delete a single subsection and its assigned items
+exports.deleteSubsection = async (req, res) => {
+  try {
+    const subId = req.params.id;
+
+    if (!subId) {
+      return res.status(400).json({ error: "Subsection id is required" });
+    }
+
+    // 1) Delete assigned items in this subsection
+    await AssignedItem.deleteMany({ subsectionId: subId });
+
+    // 2) Delete the subsection itself
+    await Subsection.findByIdAndDelete(subId);
+
+    res.json({ success: true, id: subId });
+  } catch (err) {
+    console.error("Error deleting subsection:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+exports.getCustomerRates = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    const rates = await customerItemRateService.getRatesForCustomer(customerId);
+    res.json(rates);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+
+exports.getAllItemsInBill = async (req, res) => {
+  try {
+    const customerId = req.params.customerId;
+
+    // 🔹 Fetch customer details
+    const customer = await Customer.findById(customerId).lean();
+
+    // 🔹 Fetch all billed items
+    const items = await AssignedItem.find({ customerId })
+      .populate("itemId", "name unit")
+      .lean();
+
+    // 🔹 Format items
+    const output = items.map((it) => ({
+      id: it._id,
+      itemId: it.itemId._id,
+      name: it.itemId.name,
+      unit: it.itemId.unit,
+      quantity: it.quantity,
+      rate: it.rate,
+      amount: it.quantity * it.rate,
+      sectionId: it.sectionId,
+      subsectionId: it.subsectionId
+    }));
+
+    // 🔹 Return final JSON
+    res.json({
+      customer,
+      items: output,
+    });
+
+  } catch (err) {
+    console.log("🟥 ERROR GETTING ALL ITEMS:", err);
     res.status(500).json({ error: err.message });
   }
 };
