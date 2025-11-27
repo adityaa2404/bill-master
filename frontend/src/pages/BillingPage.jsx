@@ -9,7 +9,7 @@ import SectionAccordion from '@/components/SectionAccordion';
 import CustomerSection from '@/components/CustomerSection';
 import { useNavigate } from "react-router-dom";
 import { setSelectedCustomer } from "@/store/customerSlice";
-
+import api from "@/config/api";
 const BillingPage = () => {
 
   const [allItems, setAllItems] = useState([]);
@@ -28,33 +28,33 @@ const BillingPage = () => {
 
   // Fetch items
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const res = await axios.get("http://localhost:8000/api/items");
-        setAllItems(res.data);
-      } catch (err) {
-        console.error("Error fetching items:", err);
-      }
-    };
-    fetchItems();
-  }, []);
-
-  const handleCreateItem = async () => {
-    if (!newItemName.trim()) return;
-
+  const fetchItems = async () => {
     try {
-      const res = await axios.post("http://localhost:8000/api/items", {
-        name: newItemName,
-        unit: "Nos"
-      });
-
-      setAllItems((prev) => [res.data, ...prev]);
-      setNewItemName("");
-
+      const res = await api.get("/items");
+      setAllItems(res.data);
     } catch (err) {
-      console.error("Error adding item:", err);
+      console.error("Error fetching items:", err);
     }
   };
+  fetchItems();
+}, []);
+
+const handleCreateItem = async () => {
+  if (!newItemName.trim()) return;
+
+  try {
+    const res = await api.post("/items", {
+      name: newItemName,
+      unit: "Nos",
+    });
+
+    setAllItems((prev) => [res.data, ...prev]);
+    setNewItemName("");
+  } catch (err) {
+    console.error("Error adding item:", err);
+  }
+};
+
 
   const filteredItems = allItems.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
