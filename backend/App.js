@@ -18,10 +18,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-
-
-
 app.use("/api/items", itemRoutes);  
 console.log("ROUTES LOADED:", itemRoutes);
 app.use("/api/customers", customerRoutes);
