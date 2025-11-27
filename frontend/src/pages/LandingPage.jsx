@@ -1,12 +1,39 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FileText, Users, LayoutDashboard, Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import api from "@/config/api";
 
 const LandingPage = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // 🔥 Backend wakeup state
+  const [backendStatus, setBackendStatus] = useState("checking"); 
+  const [time, setTime] = useState(0);
+
+  // 🔥 Wake backend on load
+  useEffect(() => {
+    let timer = setInterval(() => setTime((t) => t + 1), 1000);
+
+    const wake = async () => {
+      try {
+        const res = await api.get("/wakeup");
+
+        if (res.status === 200) {
+          setBackendStatus("ready");
+          clearInterval(timer);
+          return;
+        }
+      } catch (err) {
+        setBackendStatus("waking");
+        setTimeout(wake, 3000);
+      }
+    };
+
+    wake();
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    // PAGE BG: Primary Dark
     <div className="w-full min-h-screen bg-primary-dark font-[Poppins] overflow-x-hidden flex flex-col text-cream">
 
       {/* NAVBAR */}
@@ -19,7 +46,7 @@ const LandingPage = () => {
             <span>Bill Master</span>
           </div>
 
-          {/* Desktop Nav Links */}
+          {/* Desktop Links */}
           <div className="hidden md:flex gap-8 text-sm font-medium">
             <Link to="/" className="text-light-blue hover:text-accent transition-colors">Home</Link>
             <Link to="/dashboard" className="text-light-blue hover:text-accent transition-colors">Dashboard</Link>
@@ -27,13 +54,16 @@ const LandingPage = () => {
             <Link to="/customers" className="text-light-blue hover:text-accent transition-colors">Customers</Link>
           </div>
 
-          {/* Desktop CTA Button */}
+          {/* Desktop CTA */}
           <div className="hidden md:block">
-             <Link to="/billing" className="text-sm bg-accent hover:bg-accent/90 text-white px-5 py-2 rounded-md transition shadow-lg shadow-accent/20">
-                Go to App
-             </Link>
+            <Link
+              to="/billing"
+              className="text-sm bg-accent hover:bg-accent/90 text-white px-5 py-2 rounded-md transition shadow-lg shadow-accent/20"
+            >
+              Go to App
+            </Link>
           </div>
-          
+
           {/* Mobile Menu Toggle */}
           <button 
             className="md:hidden text-cream focus:outline-none z-50"
@@ -43,31 +73,55 @@ const LandingPage = () => {
           </button>
         </div>
 
-        {/* MOBILE MENU DROPDOWN */}
+        {/* MOBILE DROPDOWN */}
         <div className={`
           absolute top-full left-0 w-full bg-primary border-b border-light-blue/10 shadow-2xl flex flex-col items-center gap-6 py-8 transition-all duration-300 ease-in-out md:hidden
           ${isMenuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-5 invisible"}
         `}>
-            {["Home", "Dashboard", "Billing", "Customers"].map((item) => (
-                <Link 
-                  key={item}
-                  to={item === "Home" ? "/" : `/${item.toLowerCase()}`} 
-                  className="text-lg text-cream hover:text-accent"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {item}
-                </Link>
-            ))}
-            
+          {["Home", "Dashboard", "Billing", "Customers"].map((item) => (
             <Link 
-              to="/billing" 
-              className="mt-2 bg-accent text-white px-8 py-3 rounded-lg text-lg font-bold shadow-lg w-3/4 text-center"
+              key={item}
+              to={item === "Home" ? "/" : `/${item.toLowerCase()}`} 
+              className="text-lg text-cream hover:text-accent"
               onClick={() => setIsMenuOpen(false)}
             >
-               Go to App
+              {item}
             </Link>
+          ))}
+          
+          <Link 
+            to="/billing"
+            className="mt-2 bg-accent text-white px-8 py-3 rounded-lg text-lg font-bold shadow-lg w-3/4 text-center"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Go to App
+          </Link>
         </div>
       </nav>
+
+      {/* 🔥 BACKEND WAKEUP PANEL */}
+      {(backendStatus === "checking" || backendStatus === "waking") && (
+        <div className="w-full bg-primary border-b border-light-blue/10 py-4 text-center animate-pulse">
+          <div className="text-lg font-semibold">
+            Waking up backend server…
+          </div>
+          <div className="text-light-blue/70 mt-1">
+            This may take 20–50 seconds.......
+          </div>
+          <div className="text-accent mt-1">
+            Time: {time}s
+          </div>
+        </div>
+      )}
+
+      {/* READY PANEL */}
+      {backendStatus === "ready" && (
+        <div className="w-full bg-green-600/20 border-b border-green-400 text-center py-4">
+          <div className="text-green-400 font-semibold text-lg">
+            ✔ Backend is Awake! You can start using the app.
+          </div>
+        </div>
+      )}
 
       {/* HERO SECTION */}
       <section className="bg-primary-dark text-center px-6 py-16 md:py-24 flex-1 flex flex-col justify-center items-center">
@@ -94,7 +148,6 @@ const LandingPage = () => {
       </section>
 
       {/* FEATURES SECTION */}
-      {/* BG: Primary (Medium Blue) to distinguish from Hero */}
       <section className="px-6 py-16 md:py-20 bg-primary">
         <h2 className="text-3xl md:text-4xl font-bold text-center text-cream mb-12">
           Features
@@ -126,7 +179,7 @@ const LandingPage = () => {
 
           {/* Card 3 */}
           <div className="bg-primary-dark/50 rounded-xl p-8 shadow-lg border border-light-blue/10 text-center hover:border-accent/50 transition group">
-             <div className="w-16 h-16 bg-primary-dark rounded-full mx-auto flex items-center justify-center mb-6 text-accent group-hover:scale-110 transition-transform shadow-md">
+            <div className="w-16 h-16 bg-primary-dark rounded-full mx-auto flex items-center justify-center mb-6 text-accent group-hover:scale-110 transition-transform shadow-md">
               <LayoutDashboard size={32} />
             </div>
             <h3 className="text-xl font-bold text-cream mb-3">

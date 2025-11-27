@@ -28,6 +28,9 @@ app.use("/api/bills", billRoutes);
 app.get('/',(req,res)=>{
     res.json({message:"Hello From node server"});
 })
+app.get("/api/wakeup", (req, res) => {
+  res.json({ status: "awake", time: new Date() });
+});
 
 console.log("PORT VALUE:", PORT);
 
