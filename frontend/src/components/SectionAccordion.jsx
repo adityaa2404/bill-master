@@ -27,99 +27,162 @@ const SectionAccordion = () => {
 
   const selectedCustomer = useSelector((s) => s.customers.selectedCustomer);
   const sections = useSelector((s) => s.sections.structure);
-  const activeSection = useSelector((s) => s.sections.activeSection);
-  const activeSub = useSelector((s) => s.sections.activeSub);
+  const activeSection = useSelector((s) => s.sections.activeSection); // index
+  const activeSub = useSelector((s) => s.sections.activeSub);         // index or null
 
   const [newSection, setNewSection] = React.useState("");
   const [newSub, setNewSub] = React.useState("");
-  const [editing, setEditing] = React.useState({});
+  const [editing, setEditing] = React.useState({}); // key → {qty, rate}
 
+  /* Load structure when customer changes */
   React.useEffect(() => {
     if (selectedCustomer?._id) {
       dispatch(fetchStructure(selectedCustomer._id));
     }
   }, [dispatch, selectedCustomer]);
 
+  /* Auto-select first section */
   React.useEffect(() => {
     if (sections.length > 0 && activeSection === null) {
       dispatch(setActiveSection(0));
     }
   }, [sections, activeSection, dispatch]);
 
-  const calcSubtotal = (sec) => {
-    let total = 0;
-    sec.items?.forEach((it) => (total += (it.quantity || 0) * (it.rate || 0)));
-    sec.subsections?.forEach((sub) =>
-      sub.items?.forEach((it) => (total += (it.quantity || 0) * (it.rate || 0)))
-    );
-    return total;
+  /* Robust subtotal helper */
+  const sectionSubtotal = (sec) => {
+    let sum = 0;
+
+    // Global items
+    sec.items?.forEach((it) => {
+      const qty = it.quantity ?? it.qty ?? 0;
+      const rate = it.rate ?? 0;
+      sum += qty * rate;
+    });
+
+    // Subsection items
+    sec.subsections?.forEach((sub) => {
+      sub.items?.forEach((it) => {
+        const qty = it.quantity ?? it.qty ?? 0;
+        const rate = it.rate ?? 0;
+        sum += qty * rate;
+      });
+    });
+
+    return sum;
   };
 
+  /* Add Section */
   const handleAddSection = () => {
     if (!newSection.trim() || !selectedCustomer?._id) return;
+
     dispatch(
-      createSection({ customerId: selectedCustomer._id, name: newSection })
-    ).then(() => dispatch(fetchStructure(selectedCustomer._id)));
+      createSection({
+        customerId: selectedCustomer._id,
+        name: newSection.trim(),
+      })
+    ).then(() => {
+      dispatch(fetchStructure(selectedCustomer._id));
+    });
+
     setNewSection("");
   };
 
-  const handleAddSub = (sectionIndex) => {
+  /* Add Subsection */
+  const handleAddSubsection = (sIndex) => {
     if (!newSub.trim() || !selectedCustomer?._id) return;
-    const sec = sections[sectionIndex];
+
+    const sec = sections[sIndex];
     if (!sec) return;
+
     dispatch(
       createSubsection({
         customerId: selectedCustomer._id,
         sectionId: sec.sectionId,
-        name: newSub,
+        name: newSub.trim(),
       })
-    ).then(() => dispatch(fetchStructure(selectedCustomer._id)));
+    ).then(() => {
+      dispatch(fetchStructure(selectedCustomer._id));
+      dispatch(setActiveSection(sIndex));
+    });
+
     setNewSub("");
   };
 
-  const handleSaveEdit = (assignedId, edit) => {
-    dispatch(updateAssignedItem({ id: assignedId, data: edit })).then(() =>
-      dispatch(fetchStructure(selectedCustomer._id))
-    );
+  /* Save edited assigned item (either global or inside subsection) */
+  const saveEdit = (sIdx, subIdx, assignedId) => {
+    const key = `${sIdx}-${subIdx ?? "g"}-${assignedId}`;
+    const edit = editing[key];
+    if (!edit || !selectedCustomer?._id) return;
+
+    dispatch(
+      updateAssignedItem({
+        id: assignedId,
+        data: {
+          quantity: Number(edit.qty) || 0,
+          rate: Number(edit.rate) || 0,
+        },
+      })
+    ).then(() => {
+      dispatch(fetchStructure(selectedCustomer._id));
+      setEditing((prev) => {
+        const copy = { ...prev };
+        delete copy[key];
+        return copy;
+      });
+    });
+  };
+
+  /* Delete assigned item */
+  const handleDeleteItem = (assignedId) => {
+    if (!selectedCustomer?._id) return;
+
+    dispatch(deleteAssignedItem(assignedId)).then(() => {
+      dispatch(fetchStructure(selectedCustomer._id));
+    });
   };
 
   return (
-    <div className="flex flex-col w-full h-full overflow-hidden p-4 bg-primary-dark/20 rounded-lg border border-accent text-white">
+    <div className="flex flex-col w-full h-full min-h-0 p-4 bg-primary-dark/20 border border-accent rounded-lg text-white overflow-hidden">
       {/* Header */}
-      <h2 className="text-2xl font-bold mb-4">Project Sections</h2>
-      <div className="flex gap-2 mb-4">
-        <Input
-          placeholder="Add Section..."
-          value={newSection}
-          onChange={(e) => setNewSection(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleAddSection();
-          }}
-          className="flex-1 bg-primary-dark/40 border-accent"
-        />
-        <Button variant="outline" onClick={handleAddSection}>
-          Add
-        </Button>
+      <div className="shrink-0 mb-4">
+        <h2 className="text-2xl font-bold mb-4">Project Sections</h2>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Add Section (e.g., Master Bedroom)"
+            value={newSection}
+            onChange={(e) => setNewSection(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddSection()}
+            className="bg-primary-dark/40 border-accent flex-1"
+          />
+          <Button variant="outline" onClick={handleAddSection}>
+            Add
+          </Button>
+        </div>
       </div>
 
-      {/* Scrollable Area */}
+      {/* Scrollable content */}
       <div
-        className="flex-1 overflow-y-auto pr-2
+        className="flex-1 min-h-0 overflow-y-auto pr-2
         [&::-webkit-scrollbar]:w-2
-        [&::-webkit-scrollbar-thumb]:bg-accent/30
-        [&::-webkit-scrollbar-thumb]:rounded-full"
+        [&::-webkit-scrollbar-track]:bg-transparent
+        [&::-webkit-scrollbar-thumb]:bg-accent/20
+        [&::-webkit-scrollbar-thumb]:rounded-full
+        hover:[&::-webkit-scrollbar-thumb]:bg-accent/40"
       >
         <Accordion
           type="single"
           collapsible
+          className="w-full pb-2"
           value={activeSection !== null ? `sec-${activeSection}` : ""}
-          onValueChange={(v) =>
-            dispatch(setActiveSection(v ? Number(v.split("-")[1]) : null))
-          }
+          onValueChange={(value) => {
+            if (!value) return dispatch(setActiveSection(null));
+            const index = parseInt(value.split("-")[1], 10);
+            dispatch(setActiveSection(Number.isNaN(index) ? null : index));
+          }}
         >
           {sections.map((sec, sIndex) => {
-            const subtotal = calcSubtotal(sec);
-            const isOpen = activeSection === sIndex;
+            const subtotal = sectionSubtotal(sec);
+            const isSelected = activeSection === sIndex;
 
             return (
               <AccordionItem
@@ -127,28 +190,31 @@ const SectionAccordion = () => {
                 value={`sec-${sIndex}`}
                 className="mb-3 border border-accent/40 rounded-lg bg-black/20"
               >
-                {/* ----- HEADER WITH DELETE BUTTON (NO OVERLAP) ----- */}
+                {/* Header row with trigger + delete button (no overlap) */}
                 <div className="flex items-center gap-3 pr-3">
-                  {/* Trigger takes full width */}
                   <div className="flex-1">
                     <AccordionTrigger
-                      className={`w-full py-3 px-3 flex justify-between items-center
+                      className={`py-3 px-3 flex justify-between w-full rounded-md transition hover:bg-white/5 items-center
                         ${
-                          isOpen
-                            ? "bg-primary-dark/40 border-l-4 border-accent pl-2 text-light-blue"
-                            : ""
+                          isSelected
+                            ? "bg-primary-dark/30 text-light-blue font-semibold border-l-4 border-accent pl-2"
+                            : "text-white"
                         }`}
                     >
-                      <span className="text-lg font-semibold truncate">
+                      <span
+                        className={`text-xl text-left ${
+                          isSelected ? "text-light-blue" : ""
+                        }`}
+                      >
                         {sec.sectionName || sec.name}
                       </span>
-                      <span className="text-sm font-mono opacity-90 shrink-0 ml-3">
+                      <span className="text-lg font-mono opacity-90 shrink-0 ml-2">
                         ₹ {subtotal.toFixed(2)}
                       </span>
                     </AccordionTrigger>
                   </div>
 
-                  {/* Delete section button */}
+                  {/* Delete entire section */}
                   <Button
                     size="sm"
                     variant="destructive"
@@ -167,163 +233,304 @@ const SectionAccordion = () => {
                 </div>
 
                 {/* CONTENT */}
-                <AccordionContent className="p-4">
+                <AccordionContent className="p-4 bg-black/20 rounded-b-md">
                   {/* Add Subsection */}
-                  <div className="flex gap-2 mb-4">
+                  <div className="flex gap-2 my-2 w-full">
                     <Input
-                      placeholder="Add Subsection..."
-                      value={isOpen ? newSub : ""}
+                      placeholder="Add Subsection"
+                      value={isSelected ? newSub : ""}
                       onChange={(e) => setNewSub(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleAddSub(sIndex);
-                      }}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleAddSubsection(sIndex)
+                      }
                       className="flex-1"
                     />
                     <Button
                       variant="outline"
-                      onClick={() => handleAddSub(sIndex)}
+                      onClick={() => handleAddSubsection(sIndex)}
                     >
                       Add
                     </Button>
                   </div>
 
                   {/* Subsections */}
-                  {sec.subsections?.map((sub, subIndex) => {
-                    const subTotal = sub.items?.reduce(
-                      (t, it) => t + (it.quantity || 0) * (it.rate || 0),
-                      0
-                    );
+                  <div className="space-y-3 mt-3">
+                    {sec.subsections?.map((sub, subIndex) => {
+                      const subTotal = sub.items?.reduce((sum, it) => {
+                        const qty = it.quantity ?? it.qty ?? 0;
+                        const rate = it.rate ?? 0;
+                        return sum + qty * rate;
+                      }, 0);
 
-                    return (
-                      <div
-                        key={sub.subsectionId || subIndex}
-                        className={`relative p-3 rounded-lg border mb-3 cursor-pointer
-                          ${
-                            activeSub === subIndex
-                              ? "border-accent bg-accent/20"
-                              : "border-accent/30 bg-primary-dark/10"
-                          }`}
-                        onClick={() => dispatch(setActiveSub(subIndex))}
-                      >
-                        <div className="flex justify-between items-center">
-                          <strong className="text-lg">{sub.name}</strong>
+                      const isSubActive =
+                        isSelected && activeSub === subIndex;
 
-                          <div className="flex gap-2 items-center">
-                            <span className="text-sm font-mono">
-                              ₹ {subTotal?.toFixed(2)}
-                            </span>
+                      return (
+                        <div
+                          key={sub.subsectionId || subIndex}
+                          className={`relative border rounded-lg p-3 cursor-pointer transition
+                            ${
+                              isSubActive
+                                ? "bg-accent/20 border-accent"
+                                : "bg-primary-dark/10 border-accent/30"
+                            }`}
+                          onClick={() => dispatch(setActiveSub(subIndex))}
+                        >
+                          <div className="flex justify-between items-center">
+                            <strong className="text-lg">{sub.name}</strong>
 
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="h-7"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!window.confirm("Delete this subsection?"))
-                                  return;
-                                if (!selectedCustomer?._id) return;
-                                dispatch(
-                                  deleteSubsection(sub.subsectionId)
-                                ).then(() =>
-                                  dispatch(
-                                    fetchStructure(selectedCustomer._id)
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-mono">
+                                ₹ {subTotal?.toFixed(2)}
+                              </span>
+
+                              {/* Delete subsection */}
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                className="h-7"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (
+                                    !window.confirm(
+                                      "Delete this subsection and its items?"
+                                    )
                                   )
-                                );
-                              }}
-                            >
-                              Del
-                            </Button>
+                                    return;
+                                  if (!selectedCustomer?._id) return;
+                                  dispatch(
+                                    deleteSubsection(sub.subsectionId)
+                                  ).then(() =>
+                                    dispatch(
+                                      fetchStructure(selectedCustomer._id)
+                                    )
+                                  );
+                                }}
+                              >
+                                Del
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Items inside this subsection */}
+                          <div className="mt-3 space-y-2">
+                            {sub.items?.map((it) => {
+                              const assignedId = it.id || it._id;
+                              const key = `${sIndex}-${subIndex}-${assignedId}`;
+                              const edit = editing[key];
+
+                              const qty = it.quantity ?? it.qty ?? 0;
+                              const rate = it.rate ?? 0;
+
+                              return (
+                                <div
+                                  key={assignedId}
+                                  className="flex justify-between items-center border border-accent/20 p-2 rounded gap-2"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium truncate">
+                                      {it.name}
+                                    </div>
+                                    <div className="text-sm font-mono">
+                                      ₹ {(qty * rate).toFixed(2)}
+                                    </div>
+                                  </div>
+
+                                  {edit ? (
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <Input
+                                        type="number"
+                                        className="w-16 h-8"
+                                        value={edit.qty}
+                                        onChange={(e) =>
+                                          setEditing((prev) => ({
+                                            ...prev,
+                                            [key]: {
+                                              ...edit,
+                                              qty: e.target.value,
+                                            },
+                                          }))
+                                        }
+                                      />
+                                      <Input
+                                        type="number"
+                                        className="w-20 h-8"
+                                        value={edit.rate}
+                                        onChange={(e) =>
+                                          setEditing((prev) => ({
+                                            ...prev,
+                                            [key]: {
+                                              ...edit,
+                                              rate: e.target.value,
+                                            },
+                                          }))
+                                        }
+                                      />
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8"
+                                        onClick={() =>
+                                          saveEdit(
+                                            sIndex,
+                                            subIndex,
+                                            assignedId
+                                          )
+                                        }
+                                      >
+                                        Save
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <div className="text-xs text-muted-foreground">
+                                        x{qty}
+                                      </div>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-8 px-2"
+                                        onClick={() =>
+                                          setEditing((prev) => ({
+                                            ...prev,
+                                            [key]: { qty, rate },
+                                          }))
+                                        }
+                                      >
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="h-8 px-2"
+                                        onClick={() =>
+                                          handleDeleteItem(assignedId)
+                                        }
+                                      >
+                                        Del
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
+                      );
+                    })}
 
-                        {/* Items inside subsection */}
-                        <div className="mt-3 space-y-2">
-                          {sub.items?.map((it) => {
-                            const qty = it.quantity || 0;
-                            const rate = it.rate || 0;
-                            const id = it.id || it._id;
+                    {/* Global Items in section */}
+                    <div className="mt-4">
+                      <strong className="text-lg">
+                        Global Items in {sec.sectionName || sec.name}
+                      </strong>
 
-                            return (
-                              <div
-                                key={id}
-                                className="flex justify-between items-center p-2 border rounded border-accent/30"
-                              >
-                                <div>
-                                  <div className="font-medium">{it.name}</div>
-                                  <div className="text-sm font-mono">
-                                    ₹ {(qty * rate).toFixed(2)}
-                                  </div>
-                                </div>
+                      {sec.items?.map((it) => {
+                        const assignedId = it.id || it._id;
+                        const key = `${sIndex}-g-${assignedId}`;
+                        const edit = editing[key];
 
-                                <div className="flex gap-2 items-center">
-                                  <span className="text-xs">x{qty}</span>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() =>
-                                      dispatch(
-                                        deleteAssignedItem(id)
-                                      ).then(() =>
-                                        dispatch(
-                                          fetchStructure(
-                                            selectedCustomer._id
-                                          )
-                                        )
-                                      )
-                                    }
-                                  >
-                                    Del
-                                  </Button>
-                                </div>
+                        const qty = it.quantity ?? it.qty ?? 0;
+                        const rate = it.rate ?? 0;
+
+                        return (
+                          <div
+                            key={assignedId}
+                            className="flex justify-between items-center border border-accent/20 p-2 rounded mt-2 gap-2"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">
+                                {it.name}
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                              <div className="text-sm font-mono">
+                                ₹ {(qty * rate).toFixed(2)}
+                              </div>
+                            </div>
+
+                            {edit ? (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Input
+                                  type="number"
+                                  className="w-16 h-8"
+                                  value={edit.qty}
+                                  onChange={(e) =>
+                                    setEditing((prev) => ({
+                                      ...prev,
+                                      [key]: {
+                                        ...edit,
+                                        qty: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <Input
+                                  type="number"
+                                  className="w-20 h-8"
+                                  value={edit.rate}
+                                  onChange={(e) =>
+                                    setEditing((prev) => ({
+                                      ...prev,
+                                      [key]: {
+                                        ...edit,
+                                        rate: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-8"
+                                  onClick={() =>
+                                    saveEdit(sIndex, null, assignedId)
+                                  }
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <div className="text-xs text-muted-foreground">
+                                  x{qty}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2"
+                                  onClick={() =>
+                                    setEditing((prev) => ({
+                                      ...prev,
+                                      [key]: { qty, rate },
+                                    }))
+                                  }
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="h-8 px-2"
+                                  onClick={() => handleDeleteItem(assignedId)}
+                                >
+                                  Del
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
 
                   <Separator className="my-4" />
-
-                  {/* Global Items */}
-                  <h3 className="text-lg font-bold">
-                    Global Items in {sec.sectionName || sec.name}
-                  </h3>
-
-                  {sec.items?.map((it) => {
-                    const qty = it.quantity || 0;
-                    const rate = it.rate || 0;
-                    const id = it.id || it._id;
-
-                    return (
-                      <div
-                        key={id}
-                        className="flex justify-between items-center p-2 mt-2 border rounded border-accent/30"
-                      >
-                        <div>
-                          <div className="font-medium">{it.name}</div>
-                          <div className="text-sm font-mono">
-                            ₹ {(qty * rate).toFixed(2)}
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2 items-center">
-                          <span className="text-xs">x{qty}</span>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              dispatch(deleteAssignedItem(id)).then(() =>
-                                dispatch(fetchStructure(selectedCustomer._id))
-                              )
-                            }
-                          >
-                            Del
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-green-500">
+                      Section Subtotal
+                    </span>
+                    <span className="text-xl font-bold text-green-200 font-mono">
+                      ₹ {subtotal.toFixed(2)}
+                    </span>
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             );

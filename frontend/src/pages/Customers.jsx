@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { setSelectedCustomer, fetchCustomers, createCustomer } from "@/store/customerSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
+import BackButton from "@/components/BackButton";
 const Customers = () => {
   const [showForm, setShowForm] = useState(false);
   const [searchParams] = useSearchParams();
@@ -58,6 +58,7 @@ const Customers = () => {
 
   return (
     <div className="min-h-screen bg-primary-dark text-cream p-4 md:p-6">
+      <BackButton/>
       <div className="max-w-3xl mx-auto">
         {/* HEADER */}
         <div className="flex justify-between items-center mb-4">

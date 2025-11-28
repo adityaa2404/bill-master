@@ -118,7 +118,7 @@ const LandingPage = () => {
       {backendStatus === "ready" && (
         <div className="w-full bg-green-600/20 border-b border-green-400 text-center py-4">
           <div className="text-green-400 font-semibold text-lg">
-            ✔ Backend is Awake! You can start using the app.
+            ✔ Backend is Running !!! You can start using the app.
           </div>
         </div>
       )}

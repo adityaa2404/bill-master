@@ -10,6 +10,7 @@ import CustomerSection from '@/components/CustomerSection';
 import { useNavigate } from "react-router-dom";
 import { setSelectedCustomer } from "@/store/customerSlice";
 import api from "@/config/api";
+import BackButton from '@/components/BackButton';
 const BillingPage = () => {
 
   const [allItems, setAllItems] = useState([]);
@@ -70,15 +71,15 @@ const handleCreateItem = async () => {
 
   return (
     <div className="flex flex-col md:flex-row w-full h-dvh overflow-hidden bg-primary-dark font-[Poppins] text-cream">
-
+      
       {/* LEFT PANEL */}
       <div className={`md:flex md:w-1/3 lg:w-1/4 bg-primary p-4 border-r border-light-blue/20 flex-col min-h-0 
         ${activeTab === "items" ? "flex" : "hidden"}`}>
-
+          <BackButton/>
         <h2 className="text-lg font-bold mb-4 text-cream">Items</h2>
-
+          
         <div className="flex flex-col gap-3 w-full mb-2">
-
+          
           {/* Add Item */}
           <div className="flex gap-2">
             <Input
@@ -141,33 +142,35 @@ const handleCreateItem = async () => {
       </div>
 
       {/* MOBILE NAV */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full h-16 bg-primary-dark border-t border-light-blue/20 flex justify-around items-center z-50">
+      {/* MOBILE NAV */}
+<div className="md:hidden fixed bottom-0 left-0 w-full h-12 bg-primary-dark border-t border-light-blue/20 flex justify-around items-center z-50">
 
-        <button
-          onClick={() => setActiveTab("items")}
-          className={`flex flex-col items-center justify-center w-1/2 h-full ${
-            activeTab === "items"
-              ? "text-accent bg-white/5 border-t-2 border-accent"
-              : "text-light-blue"
-          }`}
-        >
-          <Layers size={24} className="mb-1" />
-          <span className="text-xs">Items</span>
-        </button>
+  <button
+    onClick={() => setActiveTab("items")}
+    className={`flex flex-col items-center justify-center w-1/2 h-full ${
+      activeTab === "items"
+        ? "text-accent bg-white/5 border-t-2 border-accent"
+        : "text-light-blue"
+    }`}
+  >
+    <Layers size={20} className="mb-0.5" />
+    <span className="text-[10px]">Items</span>
+  </button>
 
-        <button
-          onClick={() => setActiveTab("bill")}
-          className={`flex flex-col items-center justify-center w-1/2 h-full ${
-            activeTab === "bill"
-              ? "text-accent bg-white/5 border-t-2 border-accent"
-              : "text-light-blue"
-          }`}
-        >
-          <ShoppingCart size={24} className="mb-1" />
-          <span className="text-xs">Bill</span>
-        </button>
+  <button
+    onClick={() => setActiveTab("bill")}
+    className={`flex flex-col items-center justify-center w-1/2 h-full ${
+      activeTab === "bill"
+        ? "text-accent bg-white/5 border-t-2 border-accent"
+        : "text-light-blue"
+    }`}
+  >
+    <ShoppingCart size={20} className="mb-0.5" />
+    <span className="text-[10px]">Bill</span>
+  </button>
 
-      </div>
+</div>
+
 
     </div>
   );

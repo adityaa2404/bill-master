@@ -2,12 +2,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-
+import BackButton from "@/components/BackButton";
 const CustomerSelect = () => {
   const navigate = useNavigate();
 
   return (
     <div className="w-full h-screen bg-primary-dark flex flex-col items-center justify-center text-cream">
+      <BackButton/>
       <div className="bg-primary p-6 rounded-lg shadow-lg border border-light-blue/30 w-full max-w-md">
         <h1 className="text-xl font-bold mb-4">Billing · Select Customer</h1>
         <p className="text-sm text-light-blue mb-6">

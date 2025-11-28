@@ -8,7 +8,7 @@ const cors = require("cors");
 const customerRoutes = require("./routes/customerRoutes");
 const structureRoutes = require("./routes/structureRoutes");
 const billRoutes = require("./routes/billRoutes");
-
+const dashboardRoutes = require("./routes/dashboardRoutes");
 app.disable("etag");
 connectDB();
 app.use(express.json());
@@ -31,6 +31,8 @@ app.get('/',(req,res)=>{
 app.get("/api/wakeup", (req, res) => {
   res.json({ status: "awake", time: new Date() });
 });
+
+app.use("/api/dashboard", dashboardRoutes);
 
 console.log("PORT VALUE:", PORT);
 
