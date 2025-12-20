@@ -16,13 +16,13 @@ context = {}
 # A. Company Details (Still hardcoded as they aren't in the input JSON)
 context['company'] = {
     "name": "Dattatray Potdar",
-    "address": "Sunshine Nagar, Rahatani, Pune, MAHARASHTRA, 411018",
+    "address": "***************8",
     "email": "dpp1980@gmail.com",
     "bank": "HDFC BANK",
-    "account_no": "00071140048455",
-    "ifsc": "HDFC0000007",
+    "account_no": "000****************5",
+    "ifsc": "H************",
     "branch": "BHANDARKAR ROAD",
-    "gst": "27AAAAA0000A1Z5"
+    "gst": "2*************5"
 }
 
 # B. Customer Details (Extracted from Input)
