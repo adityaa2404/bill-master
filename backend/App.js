@@ -32,6 +32,10 @@ app.get("/api/wakeup", (req, res) => {
   res.json({ status: "awake", time: new Date() });
 });
 
+app.head("/api/wakeup", (req, res) => {
+  res.status(200).end(); // no body for HEAD
+});
+
 app.use("/api/dashboard", dashboardRoutes);
 
 console.log("PORT VALUE:", PORT);
